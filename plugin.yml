@@ -1,4 +1,4 @@
-main: spacetime.main.mainfile
+main: spacetime.mainold.mainfile
 name: spacetime
 version: 1.0
 author: Evil_Lootly

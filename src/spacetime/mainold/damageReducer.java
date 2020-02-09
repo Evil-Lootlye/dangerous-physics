@@ -1,4 +1,4 @@
-package spacetime.main;
+package spacetime.mainold;
 
 import org.bukkit.Material;
 import org.bukkit.entity.LivingEntity;

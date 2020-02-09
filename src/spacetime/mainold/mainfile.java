@@ -1,4 +1,4 @@
-package spacetime.main;
+package spacetime.mainold;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
@@ -153,7 +153,7 @@ import net.minecraft.server.v1_14_R1.PacketPlayOutWorldParticles;
 
 public class mainfile extends JavaPlugin implements Listener, CommandExecutor{
 	
-	public static mainfile instance;
+	public static VanillaMain instance 
 	public ConsoleCommandSender console = getServer().getConsoleSender();
 	Random randor = new Random();
 	public World wor = null;
@@ -1337,8 +1337,11 @@ public class mainfile extends JavaPlugin implements Listener, CommandExecutor{
 			if(bls.hasMetadata("D")) {
 				bls.removeMetadata("D", this);
 			}
-			if(randor.nextInt(5)!=0) {
+			if(randor.nextInt(5)!=0 || bls.hasMetadata("blood")) {
 				bls.setType(Material.AIR);
+				if(bls.hasMetadata("blood")) {
+					bls.removeMetadata("blood", this);
+				}
 			}
 			else {
 					bls.breakNaturally();
@@ -1493,6 +1496,7 @@ public class mainfile extends JavaPlugin implements Listener, CommandExecutor{
 		}
 		}
 		for(Entity e : b.getWorld().getNearbyEntities(b.getLocation(), 1, 1, 1)) {
+			if(!e.hasMetadata("bullet")) {
 			if(e instanceof LivingEntity) {
 				if(pow2>0) {
 					if(e instanceof Player) {
@@ -1510,6 +1514,7 @@ public class mainfile extends JavaPlugin implements Listener, CommandExecutor{
 				catch(Exception ee) {
 					
 				}
+			}
 			}
 		}
 		if(pow2<=0) {
@@ -1612,8 +1617,30 @@ public class mainfile extends JavaPlugin implements Listener, CommandExecutor{
 		}
 	}
 	
+
+    public boolean inSpawnRegion(Location l) {
+    	int spawndistance = 100;
+    	if(spawndistance < 2) {
+    		return false;
+    	}
+    	Location spawn = l.getWorld().getSpawnLocation();
+    	if(worlds.contains(l.getWorld().getName())) {
+    	if((spawn.getX()+spawndistance>l.getX())&&(spawn.getX()-spawndistance<l.getX())) {
+    		if((spawn.getZ()+spawndistance>l.getZ())&&(spawn.getZ()-spawndistance<l.getZ())) {
+    	    		return true;
+    	    }
+    	}
+    	return false;
+    	}
+    	return false;
+    }
+    
+	
 	@EventHandler
 	public void onEntityExplode(EntityExplodeEvent event) {
+		if(inSpawnRegion(event.getLocation())) {
+			return;
+		}
 		if(!worlds.contains(event.getEntity().getWorld().getName())) {
 			return;
 		}
@@ -1628,12 +1655,20 @@ public class mainfile extends JavaPlugin implements Listener, CommandExecutor{
 			event.getEntity().getWorld().playSound(event.getEntity().getLocation(), Sound.ENTITY_GENERIC_EXPLODE, 1, 1);
 			HashMap<Integer, List<Block>> empty = new HashMap<Integer, List<Block>>();
 			if(event.getEntityType()==EntityType.FIREBALL||event.getEntityType()==EntityType.WITHER_SKULL) {
-				iterate(empty, event.getLocation(), (int) (3), (int) (30/*(1.31245*16)*(1.3125*16)*(1.31245*16)*/), (int) (/*16*((1.31245*16)*(1.31245*16)*(1.31245*16))*/30));	
+				iterate(empty, event.getLocation(), (int) (3), (int) (30), (int) (30));	
 			    doFireExplosionEffect(event.getLocation());
 			}
 			else {
-			iterate(empty, event.getLocation(), (int) (event.getYield()*16), (int) ((event.getYield()*16)*(event.getYield()*16)*(event.getYield()*16)), (int) (16*((event.getYield()*16)*(event.getYield()*16)*(event.getYield()*16))));
-			}
+				if(event.getEntityType()==EntityType.PRIMED_TNT) {
+					iterate(empty, event.getLocation(), (int) (.15*16)*2, (int) ((.15*16)*(.15*16)*(.15*16))*2, 250);
+				}
+				else if(event.getEntityType()==EntityType.CREEPER) {
+					iterate(empty, event.getLocation(), (int) (.20*16)*2, (int) ((.20*16)*(.20*16)*(.20*16))*2, 250);
+				}
+				else {
+					iterate(empty, event.getLocation(), (int) (event.getYield()*16), (int) ((event.getYield()*16)*(event.getYield()*16)*(event.getYield()*16)), (int) (16*((event.getYield()*16)*(event.getYield()*16)*(event.getYield()*16))));
+				}
+				}
 			}
 		}
 		}
@@ -1658,6 +1693,9 @@ public class mainfile extends JavaPlugin implements Listener, CommandExecutor{
 	
 	@EventHandler
 	public void onBlockExplode(BlockExplodeEvent event) {
+		if(inSpawnRegion(event.getBlock().getLocation())) {
+			return;
+		}
 		if(!worlds.contains(event.getBlock().getWorld().getName())) {
 			return;
 		}
@@ -1670,7 +1708,8 @@ public class mainfile extends JavaPlugin implements Listener, CommandExecutor{
 		event.setCancelled(true);
 		event.getBlock().getWorld().playSound(event.getBlock().getLocation(), Sound.ENTITY_GENERIC_EXPLODE, 1, 1);
 		HashMap<Integer, List<Block>> empty = new HashMap<Integer, List<Block>>();
-		iterate(empty, event.getBlock().getLocation(), (int) (event.getYield()*16), (int) ((event.getYield()*16)*(event.getYield()*16)*(event.getYield()*16)), (int) (16*((event.getYield()*16)*(event.getYield()*16)*(event.getYield()*16))));
+		iterate(empty, event.getBlock().getLocation(), (int) (event.getYield()*2), (int) ((event.getYield()*2)*(event.getYield()*2)*(event.getYield()*2)), (int) (16*((event.getYield()*2)*(event.getYield()*2)*(event.getYield()*2))));
+		//iterate(empty, event.getBlock().getLocation(), (int) (event.getYield()*16), (int) ((event.getYield()*16)*(event.getYield()*16)*(event.getYield()*16)), (int) (16*((event.getYield()*16)*(event.getYield()*16)*(event.getYield()*16))));
 			}
 		}
 		}
